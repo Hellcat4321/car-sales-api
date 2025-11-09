@@ -27,7 +27,7 @@ manufacturer_stats <- function(df) {
   agg
 }
 
-# 2️⃣ Средняя цена по годам выпуска (фильтр по производителю)1
+# 2️⃣ Средняя цена по годам выпуска (фильтр по производител.)
 year_trend <- function(df, manufacturer = NULL) {
   if (!is.null(manufacturer) && nzchar(manufacturer)) {
     df <- df %>% filter(manufacturer == !!manufacturer)
