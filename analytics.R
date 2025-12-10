@@ -88,3 +88,28 @@ predict_price <- function(df, manufacturer, year_of_manufacture, engine_size, mi
   pred <- predict(fit, newdata = nd)
   list(predicted_price = round(as.numeric(pred), 2))
 }
+
+# 6️⃣ Популярные модели (без ограничения по количеству)
+popular_models <- function(df) {
+  df %>%
+    group_by(manufacturer, model) %>%
+    summarise(count_sold = n(), .groups = "drop") %>%
+    arrange(desc(count_sold))
+}
+
+# 7️⃣ Справочник производителей (для дропдаунов на фронте)
+manufacturers_list <- function(df) {
+  df %>%
+    distinct(manufacturer) %>%
+    arrange(manufacturer) %>%
+    pull(manufacturer)
+}
+
+# 8️⃣ Справочник типов топлива (для дропдаунов на фронте)
+fuel_types_list <- function(df) {
+  df %>%
+    distinct(fuel_type) %>%
+    arrange(fuel_type) %>%
+    pull(fuel_type)
+}
+

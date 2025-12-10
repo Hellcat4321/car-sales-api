@@ -9,12 +9,31 @@ library(DBI)
 library(dplyr)
 library(jsonlite)
 
+# ===============================================================
+#  CORS FILTER
+# ===============================================================
+
+#* @filter cors
+function(req, res) {
+  res$setHeader("Access-Control-Allow-Origin", "*")
+  res$setHeader("Access-Control-Allow-Headers", "*")
+  res$setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+
+  if (req$REQUEST_METHOD == "OPTIONS") {
+    res$status <- 200
+    return(list())
+  }
+
+  forward()
+}
+
 source("db.R")
 source("analytics.R")
 
 # ===============================================================
 #  Вспомогательные функции
 # ===============================================================
+
 get_df <- function() {
   con <- pg_conn()
   on.exit(dbDisconnect(con), add = TRUE)
@@ -50,28 +69,18 @@ function(path = "car_sales_data_new_data.csv") {
 # ---------------------------------------------------------------
 
 #* 1️⃣ Статистика по производителям
-#* 
-#* Возвращает таблицу с агрегированными показателями по каждому производителю:
-#* - средняя цена продажи (`avg_price`)
-#* - количество проданных машин (`count_sold`)
-#* - самая популярная модель (`popular_model`)
-#* - ранги по средней цене и количеству
 #*
 #* @get /manufacturer_stats
 #* @response 200 {array} list Список производителей с их статистикой
 #* @response 500 Ошибка при анализе данных
 function() {
   df <- get_df()
-  res <- manufacturer_stats(df)
-  toJSON(res, dataframe = "rows", auto_unbox = TRUE, na = "null")
+  manufacturer_stats(df)
 }
 
 # ---------------------------------------------------------------
 
 #* 2️⃣ Средняя цена по годам выпуска
-#* 
-#* Возвращает динамику средней цены автомобилей по годам выпуска.
-#* Можно указать конкретного производителя.
 #*
 #* @param manufacturer:string Название производителя (опционально)
 #* @get /year_trend
@@ -79,16 +88,12 @@ function() {
 #* @response 500 Ошибка при построении графика
 function(manufacturer = "") {
   df <- get_df()
-  res <- year_trend(df, manufacturer)
-  toJSON(res, dataframe = "rows", auto_unbox = TRUE, na = "null")
+  year_trend(df, manufacturer)
 }
 
 # ---------------------------------------------------------------
 
 #* 3️⃣ Соотношение типов топлива
-#*
-#* Возвращает круговую диаграмму распределения типов топлива
-#* (в процентах) для всех производителей или выбранного.
 #*
 #* @param manufacturer:string Название производителя (опционально)
 #* @get /fuel_ratio
@@ -96,50 +101,24 @@ function(manufacturer = "") {
 #* @response 500 Ошибка при анализе данных
 function(manufacturer = "") {
   df <- get_df()
-  res <- fuel_ratio(df, manufacturer)
-  toJSON(res, dataframe = "rows", auto_unbox = TRUE, na = "null")
+  fuel_ratio(df, manufacturer)
 }
 
 # ---------------------------------------------------------------
 
 #* 4️⃣ Распределение по пробегу
 #*
-#* Возвращает категории пробега автомобилей и процент каждой группы:
-#* - 0–50k  
-#* - 50–100k  
-#* - 100–150k  
-#* - 150–200k  
-#* - 200–250k  
-#* - 250k+
-#*
 #* @get /mileage_distribution
-#* @response 200 {array} list Массив объектов {range, percent}
+#* @response 200 {array} list Массив объектов {mileage_group, percent}
 #* @response 500 Ошибка при анализе данных
 function() {
   df <- get_df()
-  res <- mileage_distribution(df)
-  toJSON(res, dataframe = "rows", auto_unbox = TRUE, na = "null")
+  mileage_distribution(df)
 }
 
 # ---------------------------------------------------------------
 
 #* 5️⃣ Предсказание стоимости автомобиля
-#*
-#* Строит модель линейной регрессии по историческим данным и
-#* прогнозирует стоимость автомобиля на основе введённых параметров.
-#*
-#* Входные параметры:
-#* - `manufacturer` (строка): производитель  
-#* - `year_of_manufacture` (число): год выпуска  
-#* - `engine_size` (число): объём двигателя (литры)  
-#* - `mileage` (число): пробег (в милях или км, как в CSV)  
-#* - `car_age` (число): возраст автомобиля  
-#* - `fuel_type` (строка): тип топлива (Diesel, Petrol и т.д.)
-#*
-#* Пример запроса:
-#* ```
-#* POST /predict?manufacturer=Toyota&year_of_manufacture=2017&engine_size=1.8&mileage=50000&car_age=6&fuel_type=Petrol
-#* ```
 #*
 #* @param manufacturer:string Производитель
 #* @param year_of_manufacture:int Год выпуска
@@ -152,7 +131,7 @@ function() {
 #* @response 500 Ошибка при обучении или предсказании модели
 function(manufacturer, year_of_manufacture, engine_size, mileage, car_age, fuel_type) {
   df <- get_df()
-  res <- predict_price(
+  predict_price(
     df,
     manufacturer,
     year_of_manufacture,
@@ -161,5 +140,38 @@ function(manufacturer, year_of_manufacture, engine_size, mileage, car_age, fuel_
     car_age,
     fuel_type
   )
-  toJSON(res, auto_unbox = TRUE, na = "null")
+}
+
+# ---------------------------------------------------------------
+
+#* 6️⃣ Популярные модели автомобилей
+#*
+#* @param limit:int (игнорируется, для совместимости)
+#* @get /popular_models
+function(limit = 10) {
+  df <- get_df()
+  popular_models(df)
+}
+
+
+# ---------------------------------------------------------------
+
+#* 7️⃣ Список производителей
+#*
+#* @get /manufacturers
+#* @response 200 {array} list Массив строк — названия производителей
+function() {
+  df <- get_df()
+  manufacturers_list(df)
+}
+
+# ---------------------------------------------------------------
+
+#* 8️⃣ Список типов топлива
+#*
+#* @get /fuel_types
+#* @response 200 {array} list Массив строк — типы топлива
+function() {
+  df <- get_df()
+  fuel_types_list(df)
 }

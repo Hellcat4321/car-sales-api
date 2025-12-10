@@ -1,0 +1,389 @@
+/* src/styles.css */
+
+:root {
+  --bg-main: #050506;
+  --bg-card: #111117;
+  --bg-card-soft: #14141d;
+  --accent: #ff2e2e;
+  --accent-soft: rgba(255, 46, 46, 0.15);
+  --text-main: #ffffff;
+  --text-muted: #a4a4b5;
+  --border-soft: #1f1f2a;
+  --radius-lg: 18px;
+  --radius-md: 12px;
+  --shadow-soft: 0 0 25px rgba(0, 0, 0, 0.6);
+  --font-title: "Bebas Neue", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  --font-body: "Montserrat", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-main);
+  color: var(--text-main);
+  font-family: var(--font-body);
+}
+
+.app-root {
+  min-height: 100vh;
+  padding: 24px 28px;
+  background: radial-gradient(circle at top, #161621 0, #050506 45%);
+}
+
+.dashboard {
+  max-width: 1440px;
+  margin: 0 auto;
+  min-height: calc(100vh - 60px);
+}
+
+/* Header */
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.dashboard-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.dashboard-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.dashboard-title h1 {
+  font-family: var(--font-title);
+  letter-spacing: 0.06em;
+  margin: 0;
+  font-size: 32px;
+}
+
+.dashboard-title span {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: -3px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.select-compact {
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-soft);
+  background: #08080d;
+  color: var(--text-main);
+  font-size: 13px;
+}
+
+.icon-button {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid var(--border-soft);
+  background: #08080d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* Grid layout */
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 2.1fr 2.3fr 2.1fr;
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  height: calc(100vh - 120px); /* примерно всё поле минус хедер */
+}
+
+.card-scroll {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-scroll-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px; /* чтобы скролл не прилипал к правому краю */
+}
+
+.left-column {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  /* убираем все calc/height, пусть растягивается за счёт дочерних карточек */
+}
+
+/* верхняя и нижняя карты слева — фиксированная высота + скролл внутри */
+.card-brand,
+.card-popular {
+  height: 500px;      /* поиграйся 160–220, как тебе больше нравится */
+}
+
+.card-scroll {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.card-scroll-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+
+
+/* Cards */
+
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid var(--border-soft);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.card-subtitle {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Brand table */
+
+.brand-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+.brand-table thead {
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.brand-table th,
+.brand-table td {
+  padding: 6px 0;
+}
+
+.brand-table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.brand-rank {
+  color: var(--text-muted);
+  padding-right: 10px;
+}
+
+.brand-name {
+  font-weight: 600;
+}
+
+.brand-value {
+  text-align: right;
+}
+
+/* Popular models bar */
+
+.popular-models-list {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.popular-model-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.popular-model-name {
+  width: 70px;
+}
+
+.popular-model-bar-wrapper {
+  flex: 1;
+  background: #15151f;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.popular-model-bar {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+/* Charts */
+
+.chart-wrapper {
+  height: 220px;
+}
+
+/* Pie wrap (fuel + mileage) */
+
+.pies-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.pie-center-label {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  margin-top: -30px;
+}
+
+.pie-legend {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Prediction panel */
+
+.prediction-card {
+  background: #12121c;
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--shadow-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.prediction-card h2 {
+  font-size: 16px;
+  margin: 0 0 6px;
+}
+
+.prediction-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+  font-size: 12px;
+}
+
+.prediction-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.prediction-form input,
+.prediction-form select {
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border-soft);
+  background: #07070b;
+  color: var(--text-main);
+  font-size: 12px;
+}
+
+.button-primary {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+  padding: 10px;
+  border-radius: 999px;
+  border: none;
+  background: var(--accent);
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.price-result-block {
+  margin-top: 4px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: #0a0a10;
+  border: 1px dashed var(--accent-soft);
+}
+
+.price-main {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.price-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+/* Responsive */
+
+@media (max-width: 1100px) {
+  .dashboard-grid {
+    grid-template-columns: 1.5fr 1.5fr;
+    grid-template-rows: auto auto auto;
+  }
+}
+
+@media (max-width: 800px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    height: auto;
+  }
+
+  .left-column {
+    grid-template-rows: auto;
+  }
+
+  .card-scroll {
+    height: auto;
+  }
+
+  .card-scroll-content {
+    max-height: none;
+  }
+}
