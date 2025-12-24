@@ -1,20 +1,13 @@
 import React from "react";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 
 const COLORS = ["#ff2e2e", "#f5a623", "#5b8def", "#6dd3c9", "#9c27b0"];
 
 export function FuelPie({ data }) {
-  // fallback если API прислал undefined/null
   const safeData = Array.isArray(data)
-    ? data.map(x => ({
+    ? data.map((x) => ({
         fuel_type: x.fuel_type ?? "Unknown",
-        percent: isNaN(Number(x.percent)) ? 0 : Number(x.percent)
+        percent: isNaN(Number(x.percent)) ? 0 : Number(x.percent),
       }))
     : [];
 
@@ -37,11 +30,8 @@ export function FuelPie({ data }) {
               outerRadius={80}
               paddingAngle={2}
             >
-              {safeData.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={COLORS[index % COLORS.length]}
-                />
+              {safeData.map((_, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
 
@@ -50,23 +40,22 @@ export function FuelPie({ data }) {
                 background: "#14141f",
                 border: "1px solid #2a2a3a",
                 fontSize: 11,
+                color: "#fff",
               }}
+              itemStyle={{ color: "#fff" }}
+              labelStyle={{ color: "#fff" }}
               formatter={(v, name) => [`${Number(v).toFixed(1)}%`, name]}
             />
           </PieChart>
         </ResponsiveContainer>
 
-        <div className="pie-center-label">
-          {total ? `${total.toFixed(1)}%` : "0%"}
-        </div>
+        <div className="pie-center-label">{total ? `${total.toFixed(1)}%` : "0%"}</div>
       </div>
 
       <div className="pie-legend">
         {safeData.length === 0
           ? "Нет данных"
-          : safeData
-              .map((x) => `${x.fuel_type}: ${x.percent.toFixed(1)}%`)
-              .join(" • ")}
+          : safeData.map((x) => `${x.fuel_type}: ${x.percent.toFixed(1)}%`).join(" • ")}
       </div>
     </div>
   );

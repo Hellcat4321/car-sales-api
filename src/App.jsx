@@ -21,49 +21,88 @@ export default function App() {
   const [fuelRatio, setFuelRatio] = useState([]);
   const [mileageDistribution, setMileageDistribution] = useState([]);
   const [popularModels, setPopularModels] = useState([]);
-  const [selectedManufacturer, setSelectedManufacturer] = useState("");
 
+  const [selectedManufacturer, setSelectedManufacturer] = useState("");
+  const [selectedModel, setSelectedModel] = useState("");
+  const [modelsList, setModelsList] = useState([]);
+
+  // init
   useEffect(() => {
     (async () => {
-      const stats = await getManufacturerStats();
-      setManufacturerStats(stats);
-
-      if (stats && stats.length)
-        setSelectedManufacturer(stats[0].manufacturer);
-
-      const [mileage, popular] = await Promise.all([
-        getMileageDistribution(),
-        getPopularModels(),
+      const [stats, trend, fuel, mileage, popularAll] = await Promise.all([
+        getManufacturerStats(""),
+        getYearTrend("", ""),
+        getFuelRatio("", ""),
+        getMileageDistribution("", ""),
+        getPopularModels("", ""),
       ]);
 
+      setManufacturerStats(stats);
+      setYearTrend(trend);
+      setFuelRatio(fuel);
       setMileageDistribution(mileage);
-      setPopularModels(popular);
+      setPopularModels(popularAll);
+
+      const uniq = Array.from(
+        new Set((popularAll || []).map((x) => x?.model).filter(Boolean))
+      ).sort((a, b) => a.localeCompare(b));
+
+      setModelsList(uniq);
     })();
   }, []);
 
+  // manufacturer -> models list
   useEffect(() => {
     (async () => {
-      const [trend, fuel] = await Promise.all([
-        getYearTrend(selectedManufacturer),
-        getFuelRatio(selectedManufacturer),
+      if (!selectedManufacturer) {
+        const allRows = await getPopularModels("", "");
+        const allUniq = Array.from(
+          new Set((allRows || []).map((x) => x?.model).filter(Boolean))
+        ).sort((a, b) => a.localeCompare(b));
+        setModelsList(allUniq);
+        return;
+      }
+
+      const rows = await getPopularModels(selectedManufacturer, "");
+      const uniq = Array.from(
+        new Set((rows || []).map((x) => x?.model).filter(Boolean))
+      ).sort((a, b) => a.localeCompare(b));
+
+      setModelsList(uniq);
+
+      if (selectedModel && !uniq.includes(selectedModel)) {
+        setSelectedModel("");
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedManufacturer]);
+
+  // filters -> reload widgets
+  useEffect(() => {
+    (async () => {
+      const [stats, trend, fuel, mileage, popular] = await Promise.all([
+        getManufacturerStats(selectedModel),
+        getYearTrend(selectedManufacturer, selectedModel),
+        getFuelRatio(selectedManufacturer, selectedModel),
+        getMileageDistribution(selectedManufacturer, selectedModel),
+        getPopularModels(selectedManufacturer, selectedModel),
       ]);
 
+      setManufacturerStats(stats);
       setYearTrend(trend);
       setFuelRatio(fuel);
+      setMileageDistribution(mileage);
+      setPopularModels(popular);
     })();
-  }, [selectedManufacturer]);
+  }, [selectedManufacturer, selectedModel]);
 
   return (
     <div className="app-root">
       <div className="dashboard">
-
-        {/* HEADER */}
         <header className="dashboard-header">
           <div className="dashboard-title">
-            <div className="dashboard-icon"></div>
             <div>
-              <h1>Car Sales Analytics Dashboard</h1>
-              <span>Real-time insights for used car market</span>
+              <h1>Аналитика рынка автомобилей</h1>
             </div>
           </div>
 
@@ -74,42 +113,47 @@ export default function App() {
               onChange={(e) => setSelectedManufacturer(e.target.value)}
             >
               <option value="">Все производители</option>
-              {manufacturerStats.map((m) => (
+              {(manufacturerStats || []).map((m) => (
                 <option key={m.manufacturer} value={m.manufacturer}>
                   {m.manufacturer}
                 </option>
               ))}
             </select>
-            <button className="icon-button">⚙️</button>
-            <button className="icon-button">≡</button>
+
+            <select
+              className="select-compact"
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(e.target.value)}
+            >
+              <option value="">Все модели</option>
+              {(modelsList || []).map((model) => (
+                <option key={model} value={model}>
+                  {model}
+                </option>
+              ))}
+            </select>
           </div>
         </header>
 
         {/* GRID */}
         <div className="dashboard-grid">
-
-          {/* LEFT COLUMN */}
           <div className="left-column">
             <BrandTable data={manufacturerStats} />
             <PopularModelsChart data={popularModels} />
           </div>
 
-          {/* MIDDLE */}
-          <div>
+          <div className="middle-column">
             <YearTrendChart data={yearTrend} />
-            <div className="pies-row" style={{ marginTop: 14 }}>
+            <div className="pies-row">
               <FuelPie data={fuelRatio} />
               <MileagePie data={mileageDistribution} />
             </div>
           </div>
 
-          {/* RIGHT */}
-          <div>
+          <div className="right-column">
             <PricePrediction />
           </div>
-
         </div>
-
       </div>
     </div>
   );
