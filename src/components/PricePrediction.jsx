@@ -44,7 +44,6 @@ export function PricePrediction() {
     maximumFractionDigits: 0,
   });
 
-  // --- init lists ---
   useEffect(() => {
     (async () => {
       const [mans, fuels, stats] = await Promise.all([
@@ -66,7 +65,6 @@ export function PricePrediction() {
     })();
   }, []);
 
-  // --- when manufacturer changes: load models and set MOST popular ---
   useEffect(() => {
     (async () => {
       if (!form.manufacturer) {
@@ -93,7 +91,6 @@ export function PricePrediction() {
 
       setForm((f) => ({ ...f, damages: f.damages || "PERFECT" }));
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.manufacturer]);
 
   const handleChange = (e) => {

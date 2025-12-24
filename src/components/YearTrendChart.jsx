@@ -1,4 +1,3 @@
-// src/components/YearTrendChart.jsx
 import React from "react";
 import {
   LineChart,

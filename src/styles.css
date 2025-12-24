@@ -1,5 +1,3 @@
-/* src/styles.css */
-
 :root {
   --bg-main: #050506;
   --bg-card: #111117;
@@ -42,8 +40,6 @@ body {
   margin: 0 auto;
   min-height: calc(100vh - 60px);
 }
-
-/* Header */
 
 .dashboard-header {
   display: flex;
@@ -110,8 +106,6 @@ body {
   cursor: pointer;
 }
 
-/* Grid layout */
-
 .dashboard-grid {
   display: grid;
   grid-template-columns: 2.1fr 2.3fr 2.1fr;
@@ -120,7 +114,6 @@ body {
   align-items: stretch;
 }
 
-/* Columns */
 .left-column,
 .middle-column,
 .right-column {
@@ -131,27 +124,23 @@ body {
   gap: 18px;
 }
 
-/* Left: two cards fill full height (50/50) */
 .left-column .card-brand,
 .left-column .card-popular {
   flex: 1;
   min-height: 0;
 }
 
-/* ✅ Middle: pies taller, line chart smaller (near 1:1) */
 .middle-column .card-yeartrend {
   flex: 1;
   min-height: 0;
 }
 
 .middle-column .pies-row {
-  flex: 1.15; /* диаграммам чуть больше места */
+  flex: 1.15;
   min-height: 0;
   align-content: stretch;
   min-width: 0;
 }
-
-/* Cards */
 
 .card {
   background: var(--bg-card);
@@ -160,7 +149,7 @@ body {
   box-shadow: var(--shadow-soft);
   border: 1px solid var(--border-soft);
   min-height: 0;
-  min-width: 0; /* важно, чтобы контент не выталкивал сетку */
+  min-width: 0;
 }
 
 .card-header {
@@ -180,7 +169,6 @@ body {
   color: var(--text-muted);
 }
 
-/* Scroll helpers */
 .card-scroll {
   height: 100%;
   display: flex;
@@ -194,8 +182,6 @@ body {
   overflow-y: auto;
   padding-right: 4px;
 }
-
-/* Brand table */
 
 .brand-table {
   width: 100%;
@@ -232,8 +218,6 @@ body {
   text-align: right;
 }
 
-/* Popular models bar */
-
 .popular-models-list {
   margin-top: 10px;
   display: flex;
@@ -265,16 +249,11 @@ body {
   background: var(--accent);
 }
 
-/* Charts */
-
-/* ✅ даём графикам растягиваться по доступной высоте */
 .chart-wrapper {
   flex: 1;
   min-height: 0;
   height: auto;
 }
-
-/* Pie wrap */
 
 .pies-row {
   display: grid;
@@ -284,7 +263,6 @@ body {
   min-width: 0;
 }
 
-/* ✅ чтобы карточки внутри pies-row занимали всю высоту */
 .pies-row .card {
   height: 100%;
   display: flex;
@@ -299,14 +277,11 @@ body {
   margin-top: -30px;
 }
 
-/* (оставляем как было; перенос легенды ты уже фиксировал раньше, если нужно — добавлю) */
 .pie-legend {
   margin-top: 6px;
   font-size: 11px;
   color: var(--text-muted);
 }
-
-/* Prediction panel */
 
 .prediction-card {
   background: #12121c;
@@ -382,8 +357,6 @@ body {
   font-size: 12px;
 }
 
-/* Responsive */
-
 @media (max-width: 1100px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
@@ -405,43 +378,35 @@ body {
   }
 
   .chart-wrapper {
-    height: 220px; /* на мобилке пусть будет фиксировано */
+    height: 220px;
     flex: unset;
   }
 }
 
-/* === FIX: Recharts height === */
-
-/* карточка с графиком */
 .card-yeartrend {
   display: flex;
   flex-direction: column;
-  min-height: 260px; /* ВАЖНО */
+  min-height: 260px;
 }
 
-/* контейнер под график */
 .chart-wrapper-line {
   flex: 1;
-  min-height: 200px; /* ВАЖНО */
+  min-height: 200px;
 }
 
-/* --- Header: убрали иконку, поэтому можно чуть поджать отступы --- */
 .dashboard-title {
   gap: 0;
 }
 
-/* можно вообще скрыть иконку на всякий (если где-то осталась) */
 .dashboard-icon {
   display: none;
 }
 
-/* === Right column: no empty space at bottom === */
 .right-column {
   height: 100%;
   min-height: 0;
 }
 
-/* карточка занимает всю высоту колонки */
 .right-column .prediction-card {
   height: 100%;
   flex: 1;
@@ -451,20 +416,15 @@ body {
   flex-direction: column;
 }
 
-/* форма занимает всё доступное место */
 .right-column .prediction-form {
   flex: 1;
   min-height: 0;
 }
 
-/* результат прижимаем вниз */
 .price-result-block {
   margin-top: auto;
 }
 
-/* === Prediction: make it compact + one field per row + normal button === */
-
-/* карточка занимает высоту колонки, но контент НЕ растягиваем с дырами */
 .right-column .prediction-card {
   height: 100%;
   display: flex;
@@ -472,15 +432,13 @@ body {
   min-height: 0;
 }
 
-/* форма теперь в 1 колонку */
 .prediction-form {
   display: grid;
-  grid-template-columns: 1fr; /* один столбец = каждый фильтр на своей строке */
+  grid-template-columns: 1fr;
   gap: 10px;
-  flex: 0; /* не растягиваем форму */
+  flex: 0;
 }
 
-/* поля чуть выше/приятнее */
 .prediction-form input,
 .prediction-form select {
   padding: 10px 10px;
@@ -488,18 +446,13 @@ body {
   font-size: 13px;
 }
 
-/* кнопка нормального размера */
 .button-primary {
-  height: 44px;          /* фикс высоты */
-  padding: 0 14px;       /* без огромных отступов */
+  height: 44px;
+  padding: 0 14px;
   border-radius: 999px;
   font-size: 14px;
 }
 
-/* результат (если есть) прижать вниз — но без раздувания кнопки */
 .price-result-block {
   margin-top: auto;
 }
-
-/* если результата нет — снизу будет ровный аккуратный воздух */
-

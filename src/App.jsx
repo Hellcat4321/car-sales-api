@@ -26,7 +26,6 @@ export default function App() {
   const [selectedModel, setSelectedModel] = useState("");
   const [modelsList, setModelsList] = useState([]);
 
-  // init
   useEffect(() => {
     (async () => {
       const [stats, trend, fuel, mileage, popularAll] = await Promise.all([
@@ -51,7 +50,6 @@ export default function App() {
     })();
   }, []);
 
-  // manufacturer -> models list
   useEffect(() => {
     (async () => {
       if (!selectedManufacturer) {
@@ -74,10 +72,8 @@ export default function App() {
         setSelectedModel("");
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedManufacturer]);
 
-  // filters -> reload widgets
   useEffect(() => {
     (async () => {
       const [stats, trend, fuel, mileage, popular] = await Promise.all([
@@ -135,7 +131,6 @@ export default function App() {
           </div>
         </header>
 
-        {/* GRID */}
         <div className="dashboard-grid">
           <div className="left-column">
             <BrandTable data={manufacturerStats} />
