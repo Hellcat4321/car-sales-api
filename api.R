@@ -1,7 +1,5 @@
 # ===============================================================
 #  Car Sales Analytics API
-#  Powered by plumber, PostgreSQL, R
-#  Swagger UI: http://127.0.0.1:8000/__docs__/
 # ===============================================================
 
 library(plumber)
@@ -11,155 +9,213 @@ library(jsonlite)
 
 source("db.R")
 source("analytics.R")
+source("model.R")
+
+# ===============================================================
+#  CORS FILTER
+# ===============================================================
+#* @filter cors
+function(req, res) {
+  res$setHeader("Access-Control-Allow-Origin", "*")
+  res$setHeader("Access-Control-Allow-Headers", "*")
+  res$setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+
+  if (req$REQUEST_METHOD == "OPTIONS") {
+    res$status <- 200
+    return(list())
+  }
+  forward()
+}
 
 # ===============================================================
 #  Вспомогательные функции
 # ===============================================================
+
 get_df <- function() {
   con <- pg_conn()
   on.exit(dbDisconnect(con), add = TRUE)
   pull_cars(con)
 }
 
+# Глобальная модель (живёт пока живёт процесс API)
+.MODEL <- NULL
+
+# Инициализация модели при старте API:
+# 1) если есть price_model.rds — загрузим
+# 2) если нет — попробуем обучить из БД (если там уже есть данные)
+.MODEL <- init_model(get_df)
+
 # ===============================================================
 #  ENDPOINTS
 # ===============================================================
 
-#* Healthcheck — проверка, что API работает
+#* Healthcheck
 #* @apiTitle Car Sales Analytics API
 #* @apiDescription REST API для анализа данных о продаже автомобилей и предсказания их стоимости
 #* @apiVersion 1.0
 #* @get /health
-#* @response 200 Сервис запущен успешно
 function() {
-  list(status = "ok", message = "Car Sales API is running")
+  list(
+    status = "ok",
+    message = "Car Sales API is running",
+    model_loaded = !is.null(.MODEL),
+    model_file_exists = file.exists(MODEL_PATH)
+  )
 }
 
 # ---------------------------------------------------------------
 
-#* Загрузка CSV в базу данных PostgreSQL
-#* @param path:string Путь к CSV-файлу (по умолчанию 'car_sales_data_new_data.csv')
+#* Загрузка CSV в базу данных PostgreSQL (+ обучение модели и сохранение)
+#* @param path:string Путь к CSV-файлу
 #* @post /load_data
-#* @response 200 {object} list Возвращает статус и количество добавленных строк
-#* @response 500 Ошибка при загрузке данных
 function(path = "car_sales_data_new_data.csv") {
   n <- load_csv_to_db(path)
-  list(status = "ok", inserted_rows = n)
+
+  # после загрузки данных — обучим модель и сохраним
+  df <- get_df()
+  .MODEL <<- train_and_save_model(df)
+
+  list(status = "ok", inserted_rows = n, model_trained = TRUE)
 }
 
 # ---------------------------------------------------------------
 
-#* 1️⃣ Статистика по производителям
-#* 
-#* Возвращает таблицу с агрегированными показателями по каждому производителю:
-#* - средняя цена продажи (`avg_price`)
-#* - количество проданных машин (`count_sold`)
-#* - самая популярная модель (`popular_model`)
-#* - ранги по средней цене и количеству
-#*
+#* 1️⃣ Статистика по производителям (фильтр по model)
+#* @param model:string Модель (опционально)
 #* @get /manufacturer_stats
-#* @response 200 {array} list Список производителей с их статистикой
-#* @response 500 Ошибка при анализе данных
-function() {
+function(model = "") {
   df <- get_df()
-  res <- manufacturer_stats(df)
-  toJSON(res, dataframe = "rows", auto_unbox = TRUE, na = "null")
+  manufacturer_stats(df, model = model)
 }
 
 # ---------------------------------------------------------------
 
-#* 2️⃣ Средняя цена по годам выпуска
-#* 
-#* Возвращает динамику средней цены автомобилей по годам выпуска.
-#* Можно указать конкретного производителя.
-#*
-#* @param manufacturer:string Название производителя (опционально)
+#* 2️⃣ Средняя цена по годам (фильтр по manufacturer и model)
+#* @param manufacturer:string Производитель (опционально)
+#* @param model:string Модель (опционально)
 #* @get /year_trend
-#* @response 200 {array} list Массив объектов {year_of_manufacture, avg_price}
-#* @response 500 Ошибка при построении графика
-function(manufacturer = "") {
+function(manufacturer = "", model = "") {
   df <- get_df()
-  res <- year_trend(df, manufacturer)
-  toJSON(res, dataframe = "rows", auto_unbox = TRUE, na = "null")
+  year_trend(df, manufacturer = manufacturer, model = model)
 }
 
 # ---------------------------------------------------------------
 
-#* 3️⃣ Соотношение типов топлива
-#*
-#* Возвращает круговую диаграмму распределения типов топлива
-#* (в процентах) для всех производителей или выбранного.
-#*
-#* @param manufacturer:string Название производителя (опционально)
+#* 3️⃣ Соотношение типов топлива (фильтр по manufacturer и model)
+#* @param manufacturer:string Производитель (опционально)
+#* @param model:string Модель (опционально)
 #* @get /fuel_ratio
-#* @response 200 {array} list Массив объектов {fuel_type, percent}
-#* @response 500 Ошибка при анализе данных
-function(manufacturer = "") {
+function(manufacturer = "", model = "") {
   df <- get_df()
-  res <- fuel_ratio(df, manufacturer)
-  toJSON(res, dataframe = "rows", auto_unbox = TRUE, na = "null")
+  fuel_ratio(df, manufacturer = manufacturer, model = model)
 }
 
 # ---------------------------------------------------------------
 
-#* 4️⃣ Распределение по пробегу
-#*
-#* Возвращает категории пробега автомобилей и процент каждой группы:
-#* - 0–50k  
-#* - 50–100k  
-#* - 100–150k  
-#* - 150–200k  
-#* - 200–250k  
-#* - 250k+
-#*
+#* 4️⃣ Распределение по пробегу (фильтр по manufacturer и model)
+#* @param manufacturer:string Производитель (опционально)
+#* @param model:string Модель (опционально)
 #* @get /mileage_distribution
-#* @response 200 {array} list Массив объектов {range, percent}
-#* @response 500 Ошибка при анализе данных
-function() {
+function(manufacturer = "", model = "") {
   df <- get_df()
-  res <- mileage_distribution(df)
-  toJSON(res, dataframe = "rows", auto_unbox = TRUE, na = "null")
+  mileage_distribution(df, manufacturer = manufacturer, model = model)
 }
 
 # ---------------------------------------------------------------
 
-#* 5️⃣ Предсказание стоимости автомобиля
-#*
-#* Строит модель линейной регрессии по историческим данным и
-#* прогнозирует стоимость автомобиля на основе введённых параметров.
-#*
-#* Входные параметры:
-#* - `manufacturer` (строка): производитель  
-#* - `year_of_manufacture` (число): год выпуска  
-#* - `engine_size` (число): объём двигателя (литры)  
-#* - `mileage` (число): пробег (в милях или км, как в CSV)  
-#* - `car_age` (число): возраст автомобиля  
-#* - `fuel_type` (строка): тип топлива (Diesel, Petrol и т.д.)
-#*
-#* Пример запроса:
-#* ```
-#* POST /predict?manufacturer=Toyota&year_of_manufacture=2017&engine_size=1.8&mileage=50000&car_age=6&fuel_type=Petrol
-#* ```
+#* 5️⃣ Предсказание стоимости автомобиля (использует сохранённую модель)
 #*
 #* @param manufacturer:string Производитель
+#* @param model:string Модель
 #* @param year_of_manufacture:int Год выпуска
 #* @param engine_size:double Объём двигателя (л)
 #* @param mileage:double Пробег
-#* @param car_age:double Возраст автомобиля
 #* @param fuel_type:string Тип топлива
+#* @param sale_year:int Год, в который планируется продать авто
+#* @param damages:string Повреждения (значение из поля damages в таблице)
 #* @post /predict
-#* @response 200 {object} list Объект с предсказанной ценой {predicted_price}
-#* @response 500 Ошибка при обучении или предсказании модели
-function(manufacturer, year_of_manufacture, engine_size, mileage, car_age, fuel_type) {
-  df <- get_df()
-  res <- predict_price(
-    df,
-    manufacturer,
-    year_of_manufacture,
-    engine_size,
-    mileage,
-    car_age,
-    fuel_type
+function(manufacturer, model, year_of_manufacture, engine_size, mileage, fuel_type, sale_year, damages = "None") {
+  # если модель ещё не в памяти — попробуем подхватить из файла
+  if (is.null(.MODEL)) {
+    .MODEL <<- load_model()
+  }
+  if (is.null(.MODEL)) {
+    res$status <- 500
+    return(list(
+      error = "Модель не обучена",
+      hint = "Сначала загрузите данные через /load_data (или положите price_model.rds рядом с проектом)"
+    ))
+  }
+
+  # car_age для предсказания считаем честно от sale_year
+  car_age <- as.numeric(sale_year) - as.numeric(year_of_manufacture)
+
+  # приводим категории к уровням модели, иначе будут NA
+  man_levels <- .MODEL$levels$manufacturer
+  fuel_levels <- .MODEL$levels$fuel_type
+  dmg_levels <- .MODEL$levels$damages
+
+  manufacturer_f <- factor(manufacturer, levels = man_levels)
+  fuel_f <- factor(fuel_type, levels = fuel_levels)
+  damages_f <- factor(ifelse(is.na(damages) | damages == "", "None", damages), levels = dmg_levels)
+
+  if (is.na(manufacturer_f)) manufacturer_f <- factor("Other", levels = man_levels)
+  if (is.na(fuel_f)) fuel_f <- factor("Other", levels = fuel_levels)
+  if (is.na(damages_f)) damages_f <- factor("Other", levels = dmg_levels)
+
+  nd <- tibble::tibble(
+    sale_year = as.numeric(sale_year),
+    year_of_manufacture = as.integer(year_of_manufacture),
+    engine_size = as.numeric(engine_size),
+    mileage = as.numeric(mileage),
+    car_age = as.numeric(car_age),
+    manufacturer = manufacturer_f,
+    fuel_type = fuel_f,
+    damages = damages_f
   )
-  toJSON(res, auto_unbox = TRUE, na = "null")
+
+  # если модель обучалась без sale_year, уберём его из nd
+  if (!isTRUE(.MODEL$use_sale_year)) {
+    nd <- nd %>% select(-sale_year)
+  }
+
+  pred <- predict(.MODEL$fit, newdata = nd)
+
+  list(
+    predicted_price = round(as.numeric(pred), 2),
+    used_sale_year = isTRUE(.MODEL$use_sale_year),
+    computed_car_age = round(car_age, 2)
+  )
+}
+
+# ---------------------------------------------------------------
+
+#* 6️⃣ Популярные модели (фильтр по manufacturer и model)
+#* @param manufacturer:string Производитель (опционально)
+#* @param model:string Модель (опционально)
+#* @get /popular_models
+function(manufacturer = "", model = "") {
+  df <- get_df()
+  popular_models(df, manufacturer = manufacturer, model = model)
+}
+
+# ---------------------------------------------------------------
+
+#* 7️⃣ Список производителей (фильтр по model)
+#* @param model:string Модель (опционально)
+#* @get /manufacturers
+function(model = "") {
+  df <- get_df()
+  manufacturers_list(df, model = model)
+}
+
+# ---------------------------------------------------------------
+
+#* 8️⃣ Список типов топлива (фильтр по manufacturer и model)
+#* @param manufacturer:string Производитель (опционально)
+#* @param model:string Модель (опционально)
+#* @get /fuel_types
+function(manufacturer = "", model = "") {
+  df <- get_df()
+  fuel_types_list(df, manufacturer = manufacturer, model = model)
 }

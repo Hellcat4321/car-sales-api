@@ -1,0 +1,458 @@
+:root {
+  --bg-main: #050506;
+  --bg-card: #111117;
+  --bg-card-soft: #14141d;
+  --accent: #ff2e2e;
+  --accent-soft: rgba(255, 46, 46, 0.15);
+  --text-main: #ffffff;
+  --text-muted: #a4a4b5;
+  --border-soft: #1f1f2a;
+  --radius-lg: 18px;
+  --radius-md: 12px;
+  --shadow-soft: 0 0 25px rgba(0, 0, 0, 0.6);
+  --font-title: "Bebas Neue", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  --font-body: "Montserrat", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-main);
+  color: var(--text-main);
+  font-family: var(--font-body);
+}
+
+.app-root {
+  min-height: 100vh;
+  padding: 24px 28px;
+  background: radial-gradient(circle at top, #161621 0, #050506 45%);
+}
+
+.dashboard {
+  max-width: 1440px;
+  margin: 0 auto;
+  min-height: calc(100vh - 60px);
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.dashboard-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.dashboard-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.dashboard-title h1 {
+  font-family: var(--font-title);
+  letter-spacing: 0.06em;
+  margin: 0;
+  font-size: 32px;
+}
+
+.dashboard-title span {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: -3px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.select-compact {
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-soft);
+  background: #08080d;
+  color: var(--text-main);
+  font-size: 13px;
+}
+
+.icon-button {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid var(--border-soft);
+  background: #08080d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 2.1fr 2.3fr 2.1fr;
+  gap: 18px;
+  height: calc(100vh - 120px);
+  align-items: stretch;
+}
+
+.left-column,
+.middle-column,
+.right-column {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.left-column .card-brand,
+.left-column .card-popular {
+  flex: 1;
+  min-height: 0;
+}
+
+.middle-column .card-yeartrend {
+  flex: 1;
+  min-height: 0;
+}
+
+.middle-column .pies-row {
+  flex: 1.15;
+  min-height: 0;
+  align-content: stretch;
+  min-width: 0;
+}
+
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+  box-shadow: var(--shadow-soft);
+  border: 1px solid var(--border-soft);
+  min-height: 0;
+  min-width: 0;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.card-subtitle {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.card-scroll {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.card-scroll-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.brand-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+.brand-table thead {
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.brand-table th,
+.brand-table td {
+  padding: 6px 0;
+}
+
+.brand-table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.brand-rank {
+  color: var(--text-muted);
+  padding-right: 10px;
+}
+
+.brand-name {
+  font-weight: 600;
+}
+
+.brand-value {
+  text-align: right;
+}
+
+.popular-models-list {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.popular-model-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.popular-model-name {
+  width: 70px;
+}
+
+.popular-model-bar-wrapper {
+  flex: 1;
+  background: #15151f;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.popular-model-bar {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.chart-wrapper {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+}
+
+.pies-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  min-height: 0;
+  min-width: 0;
+}
+
+.pies-row .card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.pie-center-label {
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  margin-top: -30px;
+}
+
+.pie-legend {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.prediction-card {
+  background: #12121c;
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--shadow-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.prediction-card h2 {
+  font-size: 16px;
+  margin: 0 0 6px;
+}
+
+.prediction-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+  font-size: 12px;
+}
+
+.prediction-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.prediction-form input,
+.prediction-form select {
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border-soft);
+  background: #07070b;
+  color: var(--text-main);
+  font-size: 12px;
+}
+
+.button-primary {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+  padding: 10px;
+  border-radius: 999px;
+  border: none;
+  background: var(--accent);
+  color: white;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.price-result-block {
+  margin-top: 4px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: #0a0a10;
+  border: 1px dashed var(--accent-soft);
+}
+
+.price-main {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.price-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+@media (max-width: 1100px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .left-column,
+  .middle-column,
+  .right-column {
+    height: auto;
+  }
+
+  .left-column .card-brand,
+  .left-column .card-popular,
+  .middle-column .card-yeartrend,
+  .middle-column .pies-row {
+    flex: unset;
+    min-height: unset;
+  }
+
+  .chart-wrapper {
+    height: 220px;
+    flex: unset;
+  }
+}
+
+.card-yeartrend {
+  display: flex;
+  flex-direction: column;
+  min-height: 260px;
+}
+
+.chart-wrapper-line {
+  flex: 1;
+  min-height: 200px;
+}
+
+.dashboard-title {
+  gap: 0;
+}
+
+.dashboard-icon {
+  display: none;
+}
+
+.right-column {
+  height: 100%;
+  min-height: 0;
+}
+
+.right-column .prediction-card {
+  height: 100%;
+  flex: 1;
+  min-height: 0;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.right-column .prediction-form {
+  flex: 1;
+  min-height: 0;
+}
+
+.price-result-block {
+  margin-top: auto;
+}
+
+.right-column .prediction-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.prediction-form {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  flex: 0;
+}
+
+.prediction-form input,
+.prediction-form select {
+  padding: 10px 10px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.button-primary {
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 14px;
+}
+
+.price-result-block {
+  margin-top: auto;
+}
