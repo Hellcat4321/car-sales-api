@@ -132,13 +132,11 @@ function(manufacturer = "", model = "") {
 #* @param mileage:double Пробег
 #* @param fuel_type:string Тип топлива
 #* @param sale_year:int Год, в который планируется продать авто
-#* @param damages:string Повреждения (значение из поля damages в таблице)
+#* @param damages:string Повреждения (PERFECT/SCRATCH/DENT/CRASH/OVERHAUL)
 #* @post /predict
-function(manufacturer, model, year_of_manufacture, engine_size, mileage, fuel_type, sale_year, damages = "None") {
-  # если модель ещё не в памяти — попробуем подхватить из файла
-  if (is.null(.MODEL)) {
-    .MODEL <<- load_model()
-  }
+function(manufacturer, model, year_of_manufacture, engine_size, mileage, fuel_type, sale_year, damages = "PERFECT") {
+
+  if (is.null(.MODEL)) .MODEL <<- load_model()
   if (is.null(.MODEL)) {
     res$status <- 500
     return(list(
@@ -147,52 +145,58 @@ function(manufacturer, model, year_of_manufacture, engine_size, mileage, fuel_ty
     ))
   }
 
-  # car_age для предсказания считаем честно от sale_year
   car_age <- as.numeric(sale_year) - as.numeric(year_of_manufacture)
 
-  # приводим категории к уровням модели, иначе будут NA
-  man_levels   <- .MODEL$levels$manufacturer
-  model_levels <- .MODEL$levels$model
-  fuel_levels  <- .MODEL$levels$fuel_type
-  dmg_levels   <- .MODEL$levels$damages
-  
+  man_levels  <- .MODEL$levels$manufacturer
+  mdl_levels  <- .MODEL$levels$model
+  fuel_levels <- .MODEL$levels$fuel_type
 
   manufacturer_f <- factor(manufacturer, levels = man_levels)
-  model_f        <- factor(model, levels = model_levels)
+  model_f        <- factor(model, levels = mdl_levels)
   fuel_f         <- factor(fuel_type, levels = fuel_levels)
-  damages_f      <- factor(ifelse(is.na(damages) | damages == "", "None", damages), levels = dmg_levels)
 
   if (is.na(manufacturer_f)) manufacturer_f <- factor("Other", levels = man_levels)
-  if (is.na(fuel_f)) fuel_f <- factor("Other", levels = fuel_levels)
-  if (is.na(damages_f)) damages_f <- factor("Other", levels = dmg_levels)
+  if (is.na(model_f))        model_f        <- factor("Other", levels = mdl_levels)
+  if (is.na(fuel_f))         fuel_f         <- factor("Other", levels = fuel_levels)
+
+  mileage_num <- as.numeric(mileage)
+  log_mileage <- log1p(mileage_num)
 
   nd <- tibble::tibble(
     sale_year = as.numeric(sale_year),
     year_of_manufacture = as.integer(year_of_manufacture),
     engine_size = as.numeric(engine_size),
-    mileage = as.numeric(mileage),
+    mileage = mileage_num,
+    log_mileage = log_mileage,
     car_age = as.numeric(car_age),
     manufacturer = manufacturer_f,
     model = model_f,
-    fuel_type = fuel_f,
-    damages = damages_f
+    fuel_type = fuel_f
   )
 
-  # если модель обучалась без sale_year, уберём его из nd
   if (!isTRUE(.MODEL$use_sale_year)) {
-    nd <- nd %>% select(-sale_year)
+    nd <- dplyr::select(nd, -sale_year)
   }
 
-  x_new <- model.matrix(.MODEL$formula, nd)[, -1]
+  rhs <- delete.response(terms(.MODEL$formula))
+  x_new <- model.matrix(rhs, nd)[, -1, drop = FALSE]
   pred_log <- predict(.MODEL$fit, newx = x_new)
   pred <- exp(pred_log)
+
+  dmg_val <- ifelse(is.na(damages) | damages == "", "PERFECT", damages)
+  pen <- unname(.MODEL$damage_penalty[[dmg_val]])
+  if (is.null(pen) || !is.finite(pen)) pen <- unname(.MODEL$damage_penalty[["Other"]])
+
+  pred <- pred * pen
 
   list(
     predicted_price = round(as.numeric(pred), 2),
     used_sale_year = isTRUE(.MODEL$use_sale_year),
-    computed_car_age = round(car_age, 2)
+    computed_car_age = round(car_age, 2),
+    damages_penalty = pen
   )
 }
+
 
 # ---------------------------------------------------------------
 
