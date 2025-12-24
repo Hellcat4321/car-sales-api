@@ -151,13 +151,16 @@ function(manufacturer, model, year_of_manufacture, engine_size, mileage, fuel_ty
   car_age <- as.numeric(sale_year) - as.numeric(year_of_manufacture)
 
   # приводим категории к уровням модели, иначе будут NA
-  man_levels <- .MODEL$levels$manufacturer
-  fuel_levels <- .MODEL$levels$fuel_type
-  dmg_levels <- .MODEL$levels$damages
+  man_levels   <- .MODEL$levels$manufacturer
+  model_levels <- .MODEL$levels$model
+  fuel_levels  <- .MODEL$levels$fuel_type
+  dmg_levels   <- .MODEL$levels$damages
+  
 
   manufacturer_f <- factor(manufacturer, levels = man_levels)
-  fuel_f <- factor(fuel_type, levels = fuel_levels)
-  damages_f <- factor(ifelse(is.na(damages) | damages == "", "None", damages), levels = dmg_levels)
+  model_f        <- factor(model, levels = model_levels)
+  fuel_f         <- factor(fuel_type, levels = fuel_levels)
+  damages_f      <- factor(ifelse(is.na(damages) | damages == "", "None", damages), levels = dmg_levels)
 
   if (is.na(manufacturer_f)) manufacturer_f <- factor("Other", levels = man_levels)
   if (is.na(fuel_f)) fuel_f <- factor("Other", levels = fuel_levels)
@@ -170,6 +173,7 @@ function(manufacturer, model, year_of_manufacture, engine_size, mileage, fuel_ty
     mileage = as.numeric(mileage),
     car_age = as.numeric(car_age),
     manufacturer = manufacturer_f,
+    model = model_f,
     fuel_type = fuel_f,
     damages = damages_f
   )
@@ -179,7 +183,9 @@ function(manufacturer, model, year_of_manufacture, engine_size, mileage, fuel_ty
     nd <- nd %>% select(-sale_year)
   }
 
-  pred <- predict(.MODEL$fit, newdata = nd)
+  x_new <- model.matrix(.MODEL$formula, nd)[, -1]
+  pred_log <- predict(.MODEL$fit, newx = x_new)
+  pred <- exp(pred_log)
 
   list(
     predicted_price = round(as.numeric(pred), 2),

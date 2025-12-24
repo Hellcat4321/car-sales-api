@@ -11,8 +11,8 @@ pg_conn <- function() {
     host = "localhost",
     port = 5432,
     dbname = "car_sales_db",
-    user = "user",
-    password = "masterkey"
+    user = "postgres",
+    password = "postgres"
   )
 }
 
